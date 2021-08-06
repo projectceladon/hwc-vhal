@@ -156,7 +156,7 @@ int UioDisplay::postFb(buffer_handle_t fb) {
     }
 
     mapper.unlockBuffer(bufferHandle);
-    mapper.freeBuffer(bufferHandle);
+    mapper.release(bufferHandle);
     if(++frame_id >= 2)
       frame_id = 0;
   }

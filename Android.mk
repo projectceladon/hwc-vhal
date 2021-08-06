@@ -99,7 +99,6 @@ LOCAL_CPPFLAGS += \
         -DENABLE_HWC_UIO
 
 LOCAL_C_INCLUDES += \
-        $(INTEL_MINIGBM)/cros_gralloc \
         $(LOCAL_PATH)/uio
 endif
 
@@ -111,7 +110,6 @@ endif
 LOCAL_C_INCLUDES += \
         $(LOCAL_PATH) \
         $(LOCAL_PATH)/common \
-        $(INTEL_MINIGBM)/cros_gralloc
 
 LOCAL_SHARED_LIBRARIES := \
         liblog \

@@ -34,6 +34,7 @@ Date: 2021.06.09
 #include <errno.h>
 #include <string.h>
 #include <inttypes.h>
+#include <thread>
 #include "BufferMapper.h"
 
 #define ALIGN_DN(x) ((uintptr_t)(x) & ~0x7F)
@@ -107,10 +108,12 @@ class UioDisplay {
   uint32_t mWidth = 720;
   uint32_t mHeight = 1280;
   int mRot = 0;
+  std::unique_ptr<std::thread> mThread;
 
  private:
   int uioOpenFile(const char * shmDevice, const char * file);
   int shmOpenDev(const char * shmDevice);
+  void threadProc();
 
 };
 

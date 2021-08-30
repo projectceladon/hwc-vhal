@@ -122,15 +122,13 @@ int UioDisplay::init() {
   memset(&(app.shmHeader->frame ), 0, sizeof(KVMFRFrame ));
   app.shmHeader->flags &= ~KVMFR_HEADER_FLAG_RESTART;
   app.running = true;
+  mThread = std::unique_ptr<std::thread>(new std::thread(&UioDisplay::threadProc, this));
   return 0;
 }
 
 int UioDisplay::postFb(buffer_handle_t fb) {
   ALOGV("%s", __func__);
-  if (app.shmHeader->flags & KVMFR_HEADER_FLAG_RESTART)
-    app.shmHeader->flags &= ~KVMFR_HEADER_FLAG_RESTART;
-  if(app.running && (app.shmHeader->flags &= KVMFR_HEADER_FLAG_READY))
-  {
+  if (app.running && (0 == mDisplayId)) {
     app.shmHeader->flags &= ~KVMFR_HEADER_FLAG_READY;
     volatile KVMFRFrame * fi = &(app.shmHeader->frame);
     uint8_t* rgb = nullptr;
@@ -161,4 +159,12 @@ int UioDisplay::postFb(buffer_handle_t fb) {
       frame_id = 0;
   }
   return 0;
+}
+
+void UioDisplay::threadProc() {
+  while (true) {
+    if (app.shmHeader->flags & KVMFR_HEADER_FLAG_RESTART)
+      app.shmHeader->flags &= ~KVMFR_HEADER_FLAG_RESTART;
+    usleep(16000);
+  }
 }

@@ -567,13 +567,19 @@ int Hwc2Display::checkRotation() {
   uint32_t tr = 0;
   for (auto& layer : mLayers) {
     tr = layer.second.info().transform;
-    if (tr != 0)
+    auto& buffer = layer.second.layerBuffer();
+    if (buffer.bufferId && tr == mTransform)
       break;
   }
-  int rot = (tr == 0) ? 0 : (tr == 4) ? 1 : (tr == 3) ? 2 : 3;
-
-  mUioDisplay->setRotation(rot);
-  mTransform = tr;
+  if (tr != mTransform) {
+    int rot = (tr == 0) ? 0 : (tr == 4) ? 1 : (tr == 3) ? 2 : (tr == 7) ? 3 : 0x80;
+    if (tr != 0x80) {
+      ALOGD("Hwc2Display(%" PRIu64 ")::%s, setRotation to %d, tr=%d", mDisplayID,
+             __func__, rot, tr);
+      mUioDisplay->setRotation(rot);
+      mTransform = tr;
+    }
+  }
 
   return 0;
 }

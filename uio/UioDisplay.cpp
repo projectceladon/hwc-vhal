@@ -128,7 +128,7 @@ int UioDisplay::init() {
 
 int UioDisplay::postFb(buffer_handle_t fb) {
   ALOGV("%s", __func__);
-  if (app.running && (0 == mDisplayId)) {
+  if (app.running) {
     app.shmHeader->flags &= ~KVMFR_HEADER_FLAG_READY;
     volatile KVMFRFrame * fi = &(app.shmHeader->frame);
     uint8_t* rgb = nullptr;

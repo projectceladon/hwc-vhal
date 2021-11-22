@@ -134,6 +134,10 @@ int UioDisplay::postFb(buffer_handle_t fb) {
     uint8_t* rgb = nullptr;
     uint32_t stride = 0;
     auto& mapper = BufferMapper::getMapper();
+    if (mRot == 0 || mRot == 2)
+      property_set("uio.hwc_vhal.rotation", "portrait");
+    else if (mRot == 1 || mRot == 3)
+      property_set("uio.hwc_vhal.rotation", "landscape");
     buffer_handle_t bufferHandle;
     mapper.importBuffer(fb, &bufferHandle);
     mapper.lockBuffer(bufferHandle, rgb, stride);

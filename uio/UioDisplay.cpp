@@ -121,7 +121,7 @@ int UioDisplay::init() {
   // zero and notify the client we are starting
   memset(&(app.shmHeader->frame ), 0, sizeof(KVMFRFrame ));
   app.shmHeader->flags &= ~KVMFR_HEADER_FLAG_RESTART;
-  app.running = true;
+  app.running = false;
   mThread = std::unique_ptr<std::thread>(new std::thread(&UioDisplay::threadProc, this));
   return 0;
 }
@@ -163,8 +163,13 @@ int UioDisplay::postFb(buffer_handle_t fb) {
 
 void UioDisplay::threadProc() {
   while (true) {
-    if (app.shmHeader->flags & KVMFR_HEADER_FLAG_RESTART)
+    if (app.shmHeader->flags & KVMFR_HEADER_FLAG_RESTART) {
+      app.running = false;
       app.shmHeader->flags &= ~KVMFR_HEADER_FLAG_RESTART;
-    usleep(16000);
+      sleep(5);
+      app.running = true;
+    } else {
+      usleep(16000);
+    }
   }
 }

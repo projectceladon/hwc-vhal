@@ -564,6 +564,13 @@ int Hwc2Display::checkRotation() {
 
   if(!mUioDisplay)
     return -1;
+
+  uint32_t layer_count = mLayers.size();
+  if (layer_count == 0) {
+     ALOGD("layers are empty, skip to update the rotation!\n");
+     return 0;
+  }
+
   uint32_t tr = 0;
   for (auto& layer : mLayers) {
     tr = layer.second.info().transform;

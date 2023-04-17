@@ -5,6 +5,8 @@
 #include <hardware/hwcomposer2.h>
 #include <system/graphics.h>
 
+#include "gralloc_handle.h"
+
 const int32_t GRALLOC1_FUNCTION_ADD_CALLBACK = 108;
 enum {
   GRALLOC_EVENT_ALLOCATE  = 0,
@@ -31,6 +33,10 @@ class BufferMapper {
   int lockBuffer(buffer_handle_t b, uint8_t*& data, uint32_t& s);
   int unlockBuffer(buffer_handle_t b);
   int addCallback(gralloc_cb cb, void* ctx);
+
+  void dump(buffer_handle_t b);
+  bool isGralloc1(buffer_handle_t b);
+  void gralloc4ToGralloc1(buffer_handle_t in, struct cros_gralloc_handle* out);
 
  private:
   BufferMapper();

@@ -152,3 +152,42 @@ int BufferMapper::addCallback(gralloc_cb cb, void* ctx) {
   }
   return -1;
 }
+
+void BufferMapper::dump(buffer_handle_t b) {
+  ALOGD("Dump of buffer %p", b);
+  ALOGD("numFds=%d numInts=%d", b->numFds, b->numInts);
+  for (int i=0; i < 32; i++) {
+    ALOGD("data[%d] = %d", i, b->data[i]);
+  }
+}
+
+bool BufferMapper::isGralloc1(buffer_handle_t b) {
+  return ((b->numFds + b->numInts) * sizeof(int) ==
+      sizeof(cros_gralloc_handle) - sizeof(native_handle_t));
+}
+
+void BufferMapper::gralloc4ToGralloc1(buffer_handle_t in, struct cros_gralloc_handle* out) {
+  cros_gralloc4_handle_t g4h = (cros_gralloc4_handle_t)in;
+
+  out->base.version = g4h->base.version;
+  out->base.numFds = g4h->num_planes;
+  out->base.numInts = (sizeof(cros_gralloc_handle) - sizeof(native_handle_t)) / sizeof(int) - out->base.numFds;
+
+#define COPY_ELEMENT(e) out->e = g4h->e
+  for (int i = 0; i < g4h->num_planes; i++) {
+    COPY_ELEMENT(fds[i]);
+    COPY_ELEMENT(strides[i]);
+    COPY_ELEMENT(offsets[i]);
+    COPY_ELEMENT(sizes[i]);
+    COPY_ELEMENT(sizes[i]);
+    COPY_ELEMENT(format_modifiers[2 * i]);
+    COPY_ELEMENT(format_modifiers[2 * i + 1]);
+  }
+  COPY_ELEMENT(width);
+  COPY_ELEMENT(height);
+  COPY_ELEMENT(format);
+  COPY_ELEMENT(tiling_mode);
+  COPY_ELEMENT(pixel_stride);
+  COPY_ELEMENT(droid_format);
+  COPY_ELEMENT(usage);
+}

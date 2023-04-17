@@ -11,6 +11,8 @@
 
 #include "RemoteDisplay.h"
 
+#include "BufferMapper.h"
+
 //#define DEBUG_LAYER
 #ifdef DEBUG_LAYER
 #define LAYER_TRACE(...) ALOGD(__VA_ARGS__)
@@ -154,16 +156,33 @@ int RemoteDisplay::sendDisplayPortReq() {
   return 0;
 }
 
-int RemoteDisplay::createBuffer(buffer_handle_t buffer) {
+int RemoteDisplay::createBuffer(buffer_handle_t b) {
   ALOGV("RemoteDisplay(%d)::%s", mSocketFd, __func__);
 
+  BufferMapper& mapper = BufferMapper::getMapper();
+
   buffer_info_event_t ev;
+  int64_t bufferId = (int64_t)b;
+  buffer_handle_t buffer = b;
+  bool isGralloc1Buffer = mapper.isGralloc1(b);
+  cros_gralloc_handle* gh = nullptr;
+
+  if (isGralloc1Buffer) {
+    buffer = b;
+  } else {
+    gh = (cros_gralloc_handle*)malloc(sizeof(cros_gralloc_handle));
+    mapper.gralloc4ToGralloc1(b, gh);
+    buffer = (buffer_handle_t)gh;
+  }
 
   memset(&ev, 0, sizeof(ev));
   ev.event.type = DD_EVENT_CREATE_BUFFER;
-  ev.info.bufferId = (int64_t)buffer;
+  ev.info.bufferId = (int64_t)bufferId;
   ev.event.size = sizeof(ev) + sizeof(native_handle_t) +
                   (buffer->numFds + buffer->numInts) * 4;
+
+  ALOGI("createBuffer size=%d, sizeof(cros_gralloc_handle)=%zd, numFd=%d numInts=%d native_handle=%zd size(ev)=%zd",
+     ev.event.size, sizeof(cros_gralloc_handle), buffer->numFds, buffer->numInts, sizeof(native_handle_t), sizeof(ev));
 
   if (_send(&(ev.event), sizeof(ev.event)) < 0) {
     ALOGE("RemoteDisplay(%d) failed to send create buffer event", mSocketFd);
@@ -185,6 +204,8 @@ int RemoteDisplay::createBuffer(buffer_handle_t buffer) {
       return -1;
     }
   }
+  if (gh)
+    free(gh);
   return 0;
 }
 

@@ -952,6 +952,12 @@ bool Hwc2Display::checkFullScreenMode() {
     if (layer.info().dstFrame.right != mWidth || layer.info().dstFrame.bottom != mHeight)
       return false;
 
+    // Prioritize Auto-Rotate when both Auto-Rotate and Rotation Bypass is enabled
+    if (mEnableRotationBypass && (layer.info().transform == HAL_TRANSFORM_ROT_90 ||
+        layer.info().transform == HAL_TRANSFORM_ROT_180 ||
+        layer.info().transform == HAL_TRANSFORM_ROT_270))
+        return false;
+
     // Supported formats
     BufferMapper::getMapper().getBufferFormat(layer.buffer(), format);
     if (format == HAL_PIXEL_FORMAT_RGBA_8888 ||

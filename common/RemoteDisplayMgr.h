@@ -13,6 +13,20 @@
 class RemoteDisplayMgr : public DisplayStatusListener {
  public:
   RemoteDisplayMgr();
+
+  RemoteDisplayMgr(const RemoteDisplayMgr& r){
+      mServerFd = r.mServerFd;
+      mWorkerEventReadPipeFd = r.mWorkerEventReadPipeFd;
+      mWorkerEventWritePipeFd = r.mWorkerEventWritePipeFd;
+  }
+
+  RemoteDisplayMgr& operator=(const RemoteDisplayMgr& r){
+      mServerFd = r.mServerFd;
+      mWorkerEventReadPipeFd = r.mWorkerEventReadPipeFd;
+      mWorkerEventWritePipeFd = r.mWorkerEventWritePipeFd;
+      return *this;
+  }
+
   ~RemoteDisplayMgr();
 
   int init(IRemoteDevice* dev);

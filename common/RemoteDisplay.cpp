@@ -21,9 +21,9 @@
 #endif
 
 RemoteDisplay::RemoteDisplay(int fd) : mSocketFd(fd) {}
+
 RemoteDisplay::~RemoteDisplay() {
   if (mSocketFd >= 0) {
-    ALOGD("Close socket %d", mSocketFd);
     close(mSocketFd);
   }
 }
@@ -186,27 +186,31 @@ int RemoteDisplay::createBuffer(buffer_handle_t b) {
 
   if (_send(&(ev.event), sizeof(ev.event)) < 0) {
     ALOGE("RemoteDisplay(%d) failed to send create buffer event", mSocketFd);
-    return -1;
+    goto fail;
   }
   if (_send(&(ev.info), sizeof(ev.info)) < 0) {
     ALOGE("RemoteDisplay(%d) failed to send create buffer event info",
           mSocketFd);
-    return -1;
+    goto fail;
   }
   if (_send(buffer, sizeof(native_handle_t) +
                         (buffer->numFds + buffer->numInts) * 4) < 0) {
     ALOGE("RemoteDisplay(%d) failed to send create buffer event", mSocketFd);
-    return -1;
+    goto fail;
   }
   if (buffer->numFds > 0) {
     if (_sendFds((int*)(buffer->data), buffer->numFds) < 0) {
       ALOGE("RemoteDisplay(%d) failed to send create buffer event", mSocketFd);
-      return -1;
+      goto fail;
     }
   }
   if (gh)
     free(gh);
   return 0;
+fail:
+  if (gh)
+    free(gh);
+  return -1;
 }
 
 int RemoteDisplay::removeBuffer(buffer_handle_t buffer) {
@@ -328,7 +332,7 @@ int RemoteDisplay::updateLayers(std::vector<layer_info_t>& layerInfo) {
                   layers[i].layerId, layers[i].stackId, layers[i].taskId);
     }
   }
-
+  memset(&ev, 0, sizeof(ev));
   ev.event.type = DD_EVENT_UPDATE_LAYERS;
   ev.event.size = sizeof(ev) + sizeof(layer_info_t) * numLayers;
   ev.numLayers = numLayers;
@@ -375,7 +379,7 @@ int RemoteDisplay::presentLayers(
       layers[i] = layerBuffer[i];
     }
   }
-
+  memset(&ev, 0, sizeof(ev));
   ev.event.type = DD_EVENT_PRESENT_LAYERS_REQ;
   ev.event.size = sizeof(ev) + sizeof(layer_buffer_info_t) * numLayers;
   ev.numLayers = numLayers;
@@ -517,15 +521,19 @@ int RemoteDisplay::onPresentLayersAck(const display_event_t& ev) {
           mSocketFd);
     return -1;
   }
+
   if (_recv(&ack.numLayers, sizeof(ack.numLayers)) < 0) {
     ALOGE("RemoteDisplay(%d) failed to receive present layers ack event",
           mSocketFd);
+    return -1;
+  } else if (ack.numLayers <= 0 || ack.numLayers > 0xFFFFFFFF) {
     return -1;
   }
 
   mDisplayFlags.value = ack.flags;
 
   std::vector<layer_buffer_info_t> layerBuffers;
+
   layerBuffers.resize(ack.numLayers);
   for (size_t i = 0; i < ack.numLayers; i++) {
     if (_recv(&layerBuffers.at(i), sizeof(layer_buffer_info_t)) < 0) {

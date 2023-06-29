@@ -11,6 +11,16 @@ class ShaderProgram {
 public:
     ShaderProgram(const char* pComputeSource);
     ShaderProgram(const char* pVertexSource, const char* pFragmentSource);
+    ShaderProgram(const ShaderProgram& s){
+        mProgram = s.mProgram;
+        mShaders = s.mShaders;
+    }
+
+    ShaderProgram& operator=(const ShaderProgram& s){
+        mProgram = s.mProgram;
+        mShaders = s.mShaders;
+        return *this;
+    }
     ~ShaderProgram();
 
     GLuint getProgram() const { return mProgram; }

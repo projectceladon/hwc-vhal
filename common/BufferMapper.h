@@ -20,6 +20,15 @@ typedef int32_t /*gralloc1_error_t*/ (*GRALLOC1_PFN_ADD_CALLBACK)(
 
 class BufferMapper {
  public:
+  BufferMapper(const BufferMapper& b){
+    mGralloc = b.mGralloc;
+  }
+
+  BufferMapper& operator=(const BufferMapper& b){
+    mGralloc = b.mGralloc;
+    return *this;
+  }
+
   ~BufferMapper();
 
   static BufferMapper& getMapper() {

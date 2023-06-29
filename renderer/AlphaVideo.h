@@ -11,6 +11,14 @@
 class AlphaVideo : public RenderTask {
 public:
     AlphaVideo();
+    AlphaVideo(const AlphaVideo& a){
+        mBufferTextures = a.mBufferTextures;
+    }
+
+    AlphaVideo& operator=(const AlphaVideo& a){
+        mBufferTextures = a.mBufferTextures;
+        return *this;
+    }
     ~AlphaVideo();
 
     void setBuffer(buffer_handle_t h) {

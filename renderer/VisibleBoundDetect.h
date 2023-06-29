@@ -16,6 +16,18 @@ struct PixelStat {
 class VisibleBoundDetect : public RenderTask {
 public:
     VisibleBoundDetect();
+    VisibleBoundDetect(const VisibleBoundDetect& h){
+        for (int i = 0; i < 2; i++) {
+            mPixelStatBuffer[i] = h.mPixelStatBuffer[i];
+        }
+    }
+
+    VisibleBoundDetect& operator=(const VisibleBoundDetect& h){
+        for (int i = 0; i < 2; i++) {
+            mPixelStatBuffer[i] = h.mPixelStatBuffer[i];
+        }
+        return *this;
+    }
     ~VisibleBoundDetect();
 
     void setBuffer(buffer_handle_t h) {

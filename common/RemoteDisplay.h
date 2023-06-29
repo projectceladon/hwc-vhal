@@ -11,6 +11,14 @@
 class RemoteDisplay {
  public:
   RemoteDisplay(int fd);
+  RemoteDisplay(const RemoteDisplay& r){
+    mSocketFd = r.mSocketFd;
+  }
+
+  RemoteDisplay& operator=(const RemoteDisplay& r){
+    mSocketFd = r.mSocketFd;
+    return *this;
+  }
   virtual ~RemoteDisplay();
 
   int port() const { return mPort; }

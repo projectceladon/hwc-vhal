@@ -13,6 +13,7 @@
 #include "RemoteDisplayMgr.h"
 
 RemoteDisplayMgr::RemoteDisplayMgr() {}
+
 RemoteDisplayMgr::~RemoteDisplayMgr() {
   if (mServerFd >= 0) {
     close(mServerFd);
@@ -96,6 +97,9 @@ int RemoteDisplayMgr::connectToRemote() {
 
   memset(&addr, 0, sizeof(addr));
   addr.sun_family = AF_UNIX;
+  if (strlen(kClientSock) > sizeof(addr.sun_path)) {
+    return -1;
+  }
   strncpy(&addr.sun_path[0], kClientSock, strlen(kClientSock));
   if (connect(mClientFd, (struct sockaddr*)&addr,
               sizeof(sa_family_t) + strlen(kClientSock) + 1) < 0) {
@@ -226,7 +230,9 @@ void RemoteDisplayMgr::socketThreadProc() {
   if (fstat(mServerFd, &st) == 0) {
     mod |= st.st_mode;
   }
-  chmod(kServerSockId, mod);
+  if (chmod(kServerSockId, mod)) {
+    return;
+  }
 
   if (listen(mServerFd, 1) < 0) {
     ALOGE("Failed to listen on server socket");
@@ -239,6 +245,10 @@ void RemoteDisplayMgr::socketThreadProc() {
       break;
     }
     struct epoll_event events[kMaxEvents];
+    for (int n = 0; n < kMaxEvents; ++n) {
+      memset(&events[n], 0, sizeof(events[n]));
+    }
+
     int nfds = epoll_wait(mEpollFd, events, kMaxEvents, -1);
     if (nfds < 0) {
       nfds = 0;
@@ -250,7 +260,7 @@ void RemoteDisplayMgr::socketThreadProc() {
     for (int n = 0; n < nfds; ++n) {
       if (events[n].data.fd == mServerFd) {
         struct sockaddr_un addr;
-        socklen_t sockLen;
+        socklen_t sockLen = 0;
         int clientFd = -1;
 
         clientFd = accept(mServerFd, (struct sockaddr*)&addr, &sockLen);
@@ -266,13 +276,13 @@ void RemoteDisplayMgr::socketThreadProc() {
         }
       } else if (events[n].data.fd == mWorkerEventReadPipeFd) {
         char buf[16];
-        read(mWorkerEventReadPipeFd, buf, sizeof(buf));
-
-        std::unique_lock<std::mutex> lk(mWorkerMutex);
-        for (auto fd : mPendingRemoveDisplays) {
-          removeRemoteDisplay(fd);
+        if (read(mWorkerEventReadPipeFd, buf, sizeof(buf)) > 0){
+          std::unique_lock<std::mutex> lk(mWorkerMutex);
+          for (auto fd : mPendingRemoveDisplays) {
+            removeRemoteDisplay(fd);
+          }
+          mPendingRemoveDisplays.clear();
         }
-        mPendingRemoveDisplays.clear();
       } else {
         int fd = events[n].data.fd;
         if (mRemoteDisplays.find(fd) != mRemoteDisplays.end()) {

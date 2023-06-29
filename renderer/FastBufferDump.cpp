@@ -25,40 +25,15 @@ FastBufferDump::FastBufferDump(uint32_t num, uint32_t z, buffer_handle_t b, int 
 }
 
 void FastBufferDump::prepareFolder() {
-    struct stat st;
-    bool exist = false;
-
-    mEnableDump = false;
-    int ret = stat(kDumpFolder, &st);
-    if (ret < 0) {
-        if (errno != ENOENT) {
-            ALOGE("Failed to access %s:%s", kDumpFolder, strerror(errno));
-            return;
-        }
-    } else {
-        if (!(st.st_mode & S_IFDIR)) {  // not a folder
-            ALOGD("%s exits but it is not a folder, try to recreate it as folder", kDumpFolder);
-            if (unlink(kDumpFolder) < 0) {
-                ALOGE("Can't remove %s:%s", kDumpFolder, strerror(errno));
-                return;
-            }
-        } else {
-            exist = true;
-        }
+    if (mkdir(kDumpFolder, 0777) < 0) {
+        ALOGE("%s doesn't exit but failed to create it:%s", kDumpFolder, strerror(errno));
+        return;
     }
-    // now create the folder
-    if (!exist) {
-        if (mkdir(kDumpFolder, 0777) < 0) {
-            ALOGE("%s doesn't exit but failed to create it:%s", kDumpFolder, strerror(errno));
-            return;
-        }
-    }
-    // now check the write access to the folder
     if (access(kDumpFolder, F_OK | W_OK) < 0) {
         ALOGE("Can't write %s, dump is disabled", kDumpFolder);
         return;
     }
-    mEnableDump = true;
+    ALOGD("Success to access %s", kDumpFolder);
 }
 
 int FastBufferDump::preparePngHeader(FILE* file,
@@ -139,9 +114,11 @@ int FastBufferDump::dumpToPng(const char* path, const ImageData* image) {
   }
 
   if (preparePngHeader(fp, image, png, info) < 0) {
+    fclose(fp);
     return -1;
   }
   if (fillPngData(image, png) < 0) {
+    fclose(fp);
     return -1;
   }
 
@@ -163,6 +140,7 @@ int FastBufferDump::run() {
         return 0;
     }
     uint8_t* data = (uint8_t*)malloc(w * h * 4);
+    memset(data, 0, w * h * 4);
     if (!data) {
         ALOGE("FastBufferDump: failed to alloc readback data buffer");
         return -1;
@@ -211,5 +189,6 @@ int FastBufferDump::run() {
         image.data = data;
         dumpToPng(path, &image);
     }
+    free(data);
     return 0;
 }

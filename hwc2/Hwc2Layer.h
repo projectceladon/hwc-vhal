@@ -10,6 +10,14 @@
 class Hwc2Layer {
  public:
   Hwc2Layer(hwc2_layer_t idx);
+  Hwc2Layer(const Hwc2Layer& h){
+    mAcquireFence = h.mAcquireFence;
+  }
+
+  Hwc2Layer& operator=(const Hwc2Layer& h){
+    mAcquireFence = h.mAcquireFence;
+    return *this;
+  }
   ~Hwc2Layer();
 
   static const int64_t kOneSecondNs = 1000ULL * 1000ULL * 1000ULL;

@@ -9,7 +9,7 @@ BufferMapper::BufferMapper() {
 }
 
 BufferMapper::~BufferMapper() {
-  ALOGV("%s", __func__);
+  // ALOGV("%s", __func__);
   if (mGralloc) {
     gralloc1_close(mGralloc);
   }

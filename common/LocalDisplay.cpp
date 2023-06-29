@@ -11,7 +11,10 @@ int getResFromFb(int& w, int& h) {
   struct fb_var_screeninfo fbVar;
   int fd = open("/dev/fb0", O_RDWR);
   if (fd >= 0) {
-    ioctl(fd, FBIOGET_VSCREENINFO, &fbVar);
+    if (ioctl(fd, FBIOGET_VSCREENINFO, &fbVar)) {
+      close(fd);
+      return -1;
+    }
     w = fbVar.xres;
     h = fbVar.yres;
     close(fd);

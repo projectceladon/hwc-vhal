@@ -58,10 +58,6 @@ Error Hwc2Layer::setBuffer(buffer_handle_t buffer, int32_t acquireFence) {
   if (mBuffer != buffer) {
     if (mBuffers.count(buffer) == 0) {
       mBuffers.insert(buffer);
-      //don't create the layer buffer while in legacy mode
-      if (mRemoteDisplay && (mRemoteDisplay->flags() & MODE_MARSK >> 8) > 0) {
-        mRemoteDisplay->createBuffer(buffer);
-      }
     }
 
     mBuffer = buffer;

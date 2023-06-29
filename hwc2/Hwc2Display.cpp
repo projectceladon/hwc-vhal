@@ -2,7 +2,6 @@
 
 #include <errno.h>
 #include <inttypes.h>
-
 #include <cutils/properties.h>
 #include <cutils/log.h>
 #include <sync/sync.h>
@@ -125,7 +124,6 @@ Hwc2Display::Hwc2Display(hwc2_display_t id, Hwc2Device& device)
 }
 
 Hwc2Display::~Hwc2Display() {
-  ALOGD("Hwc2Display(%" PRIu64 ")::%s", mDisplayID, __func__);
   if (mFbAcquireFenceFd >= 0) {
     close(mFbAcquireFenceFd);
     mFbAcquireFenceFd = -1;
@@ -388,14 +386,14 @@ Error Hwc2Display::getConfigs(uint32_t* num_configs, hwc2_config_t* configs) {
 
   std::unique_lock<std::mutex> lck(mRemoteDisplayMutex);
   if (mRemoteDisplay) {
-    for (auto buffer : mFullScreenBuffers) {
+    for (auto& buffer : mFullScreenBuffers) {
       mRemoteDisplay->removeBuffer(buffer.second);
     }
   }
   mFullScreenBuffers.clear();
 
   if (mRemoteDisplay) {
-    for (auto buffer : mFbtBuffers) {
+    for (auto& buffer : mFbtBuffers) {
       mRemoteDisplay->removeBuffer(buffer);
     }
   }
@@ -604,7 +602,8 @@ Error Hwc2Display::present(int32_t* retireFence) {
     if (mFrameToDump == 0) {
       if (property_get("debug.hwc_vhal.frame_to_dump", value, nullptr)) {
         mFrameToDump = atoi(value);
-        property_set("debug.hwc_vhal.frame_to_dump", "0");
+        if (property_set("debug.hwc_vhal.frame_to_dump", "0"))
+          ALOGW("failed to set property debug.hwc_vhal.frame_to_dump = 0");;
       }
     }
     if (mFrameToDump > 0) {
@@ -969,11 +968,10 @@ bool Hwc2Display::checkFullScreenMode() {
 
 void Hwc2Display::exitFullScreenMode() {
   ALOGD("Exit fullscreen mode");
-
   // Don't call it in mRemoteDisplayMutex locked
   std::unique_lock<std::mutex> lck(mRemoteDisplayMutex);
   if (mRemoteDisplay) {
-    for (auto buffer : mFullScreenBuffers) {
+    for (auto &buffer : mFullScreenBuffers) {
       mRemoteDisplay->removeBuffer(buffer.second);
     }
     mFullScreenBuffers.clear();
@@ -991,7 +989,7 @@ void Hwc2Display::onGrallocCallback(int event, const buffer_handle_t buffer) {
     case GRALLOC_EVENT_RELEASE:
       //ALOGD("%s: buffer %p released", __func__, buffer);
       // todo: move handle to main thread to avoid race condition
-      for (auto it : mFullScreenBuffers) {
+      for (auto& it : mFullScreenBuffers) {
         if (it.second == buffer) {
           ALOGD("%s: fullscreen buffer %p released", __func__, buffer);
           exitFullScreenMode();

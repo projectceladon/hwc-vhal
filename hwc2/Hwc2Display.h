@@ -26,6 +26,18 @@ class Hwc2Device;
 class Hwc2Display : public DisplayEventListener {
  public:
   Hwc2Display(hwc2_display_t id, Hwc2Device& device);
+  Hwc2Display(const Hwc2Display& h):
+    mDevice(h.mDevice),
+    mVsyncThread(*this){
+    mFbAcquireFenceFd = h.mFbAcquireFenceFd;
+    mOutputBufferFenceFd = h.mOutputBufferFenceFd;
+  }
+
+  Hwc2Display& operator=(const Hwc2Display& h){
+    mFbAcquireFenceFd = h.mFbAcquireFenceFd;
+    mOutputBufferFenceFd = h.mOutputBufferFenceFd;
+    return *this;
+  }
   virtual ~Hwc2Display();
 
   int width() const { return mWidth; }

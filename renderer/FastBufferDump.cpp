@@ -3,6 +3,7 @@
 #include <cutils/log.h>
 
 #include "FastBufferDump.h"
+#include "BufferMapper.h"
 
 //#define DEBUG_GL
 
@@ -130,7 +131,6 @@ int FastBufferDump::dumpToPng(const char* path, const ImageData* image) {
 int FastBufferDump::run() {
     if (!mEnableDump)
         return -1;
-
     BufferTexture bufTex(mHandle, true);
     uint32_t w = bufTex.getWidth();
     uint32_t h = bufTex.getHeight();

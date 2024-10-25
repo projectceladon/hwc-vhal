@@ -68,7 +68,7 @@ Hwc2Display::Hwc2Display(hwc2_display_t id) {
     ALOGD("Display %" PRIu64 " default size <%d %d> from debug fs", id, w, h);
   }
 
-  if (w & h) {
+  if (w && h) {
     mWidth = w;
     mHeight = h;
   }

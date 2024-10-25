@@ -58,6 +58,7 @@ Hwc2Device::Hwc2Device() {
 Error Hwc2Device::init() {
   ALOGV("%s", __func__);
 
+#ifdef ENABLE_HWC_REMOTE
   mRemoteDisplayMgr = std::unique_ptr<RemoteDisplayMgr>(new RemoteDisplayMgr());
   if (!mRemoteDisplayMgr) {
     ALOGE("Failed to create remote display manager, out of memory");
@@ -68,6 +69,7 @@ Error Hwc2Device::init() {
     mDisplays.emplace(kPrimayDisplay, 0);
     onHotplug(kPrimayDisplay, true);
   }
+#endif
 
 #ifdef ENABLE_MULTI_DISPLAY
   int maxDisplayCount = kMaxDisplayCount;

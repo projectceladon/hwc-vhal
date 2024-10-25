@@ -631,3 +631,8 @@ Error Hwc2Display::setActiveConfigWithConstraints(hwc2_config_t config,
   ALOGV("Hwc2Display(%" PRIu64 ")::%s", mDisplayID, __func__);
   return Error::None;
 }
+
+HWC2::Error Hwc2Display::setExpectedPresentTime(
+    const std::optional<ClockMonotonicTimestamp>& expectedPresentTime) {
+  return HWC2::Error::None;
+}

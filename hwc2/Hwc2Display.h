@@ -31,6 +31,7 @@ Date: 2021.06.09
 #include <map>
 #include <memory>
 #include <vector>
+#include <optional>
 
 #include <hardware/hwcomposer2.h>
 
@@ -41,6 +42,17 @@ Date: 2021.06.09
 #ifdef ENABLE_HWC_UIO
 #include "UioDisplay.h"
 #endif
+
+//TODO: include HWC3 headers
+struct ClockMonotonicTimestamp {
+    int64_t timestampNanos;
+};
+typedef enum {
+    HWC3_FUNCTION_SET_EXPECTED_PRESENT_TIME = HWC2_FUNCTION_GET_LAYER_GENERIC_METADATA_KEY + 1,
+} hwc3_function_descriptor_t;
+typedef int32_t /*hwc_error_t*/ (*HWC3_PFN_SET_EXPECTED_PRESENT_TIME)(hwc2_device_t* device,
+        hwc2_display_t display, const std::optional<ClockMonotonicTimestamp>& expectedPresentTime);
+
 
 class RemoteDisplay;
 
@@ -116,6 +128,8 @@ class Hwc2Display : public DisplayEventListener {
   HWC2::Error setActiveConfigWithConstraints(hwc2_config_t config,
                                              hwc_vsync_period_change_constraints_t* constraints,
                                              hwc_vsync_period_change_timeline_t* timeline_t);
+  HWC2::Error setExpectedPresentTime(
+      const std::optional<ClockMonotonicTimestamp>& expectedPresentTime);
 
  protected:
   HWC2::Error hotplug(bool in);

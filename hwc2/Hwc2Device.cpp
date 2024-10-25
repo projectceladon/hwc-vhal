@@ -519,9 +519,15 @@ hwc2_function_pointer_t Hwc2Device::getFunctionHook(struct hwc2_device* dev,
 
     case FunctionDescriptor::Invalid:
     default:
-      ALOGE("%s:Unsupported HWC2 function, descriptor=%d", __func__,
-            descriptor);
-      return nullptr;
+      if (descriptor == HWC3_FUNCTION_SET_EXPECTED_PRESENT_TIME)
+        return asFP<HWC3_PFN_SET_EXPECTED_PRESENT_TIME>(
+            DisplayHook<decltype(&Hwc2Display::setExpectedPresentTime),
+                        &Hwc2Display::setExpectedPresentTime, const std::optional<ClockMonotonicTimestamp>&>);
+      else {
+        ALOGE("%s:Unsupported HWC2 function, descriptor=%d", __func__,
+              descriptor);
+        return nullptr;
+      }
   }
 }
 

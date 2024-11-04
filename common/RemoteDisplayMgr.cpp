@@ -27,6 +27,7 @@ Date: 2021.06.09
 //#define LOG_NDEBUG 0
 
 #include <cutils/log.h>
+#include <cutils/properties.h>
 
 #include <sys/epoll.h>
 #include <sys/ioctl.h>
@@ -52,9 +53,6 @@ RemoteDisplayMgr::~RemoteDisplayMgr() {
 }
 
 int RemoteDisplayMgr::init(IRemoteDevice* dev) {
-
-  return -1;
-
   mEpollFd = epoll_create(kMaxEvents);
   if (mEpollFd == -1) {
     ALOGE("epoll_create:%s", strerror(errno));
@@ -215,25 +213,43 @@ void RemoteDisplayMgr::socketThreadProc() {
   addr.sun_family = AF_UNIX;
   strncpy(&addr.sun_path[0], kServerSock, strlen(kServerSock));
 
-  unlink(kServerSock);
+  const char* path = kServerSock;
+#ifdef USE_ABSTRACT_SOCKET
+  bool abstract = true;
+#else
+  bool abstract = false;
+#endif
+  if (abstract) {
+      path = "hwc-sock";
+      strncpy(&addr.sun_path[1], path, strlen(path));
+      addr.sun_path[0] = 0;
+  } else {
+      strncpy(&addr.sun_path[0], path, strlen(path));
+      unlink(path);
+  }
+
   if (bind(mServerFd, (struct sockaddr*)&addr,
-           sizeof(sa_family_t) + strlen(kServerSock) + 1) < 0) {
+           sizeof(sa_family_t) + strlen(path) + 1) < 0) {
     ALOGE("Failed to bind server socket address");
     return;
   }
 
   // TODO: use group access only for security
-  struct stat st;
-  __mode_t mod = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
-  if (fstat(mServerFd, &st) == 0) {
-    mod |= st.st_mode;
+  if (!abstract) {
+    struct stat st;
+    __mode_t mod = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH;
+    if (fstat(mServerFd, &st) == 0) {
+      mod |= st.st_mode;
+    }
+    chmod(path, mod);
   }
-  chmod(kServerSock, mod);
 
   if (listen(mServerFd, 1) < 0) {
     ALOGE("Failed to listen on server socket");
     return;
   }
+
+  property_set("vendor.hwc_vhal.ready", "1");
 
   while (true) {
     struct epoll_event events[kMaxEvents];

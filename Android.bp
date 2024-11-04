@@ -57,6 +57,7 @@ cc_library_shared {
 
     cflags: [
         "-DENABLE_HWC_REMOTE",
+        "-DUSE_ABSTRACT_SOCKET",
     ],
 
     vendor: true,
